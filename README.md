@@ -5,7 +5,7 @@
 
 # ![](https://user-images.githubusercontent.com/4441470/224455560-91ed3ee7-f510-4041-a8d2-3fc093025112.png) Soenneker.Extensions.Configuration.Logging
 
-A collection of helpful IConfiguration logging related extension methods.
+Resolves a Serilog `LogEventLevel` from `IConfiguration` using a preferred key and a backward-compatible legacy key.
 
 ## Installation
 
@@ -13,15 +13,52 @@ A collection of helpful IConfiguration logging related extension methods.
 dotnet add package Soenneker.Extensions.Configuration.Logging
 ```
 
-## Quick start
+## Configuration
+
+Use `Log:Levels:Default` for new applications:
+
+```json
+{
+  "Log": {
+    "Levels": {
+      "Default": "Information"
+    }
+  }
+}
+```
+
+`Log:DefaultLogLevel` remains supported for applications using the earlier configuration shape:
+
+```json
+{
+  "Log": {
+    "DefaultLogLevel": "Warning"
+  }
+}
+```
+
+Supported values are `Verbose`, `Debug`, `Information`, `Warning`, `Error`, and `Fatal`. Matching is case-insensitive.
+
+## Usage
 
 ```csharp
 using Soenneker.Extensions.Configuration.Logging;
+using Serilog;
 
-// Given an existing IConfiguration named config:
-var result = config.GetLogEventLevel();
+var level = configuration.GetLogEventLevel();
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Is(level)
+    .WriteTo.Console()
+    .CreateLogger();
 ```
 
-## Common operations
+Resolution is deterministic:
 
-- `GetLogEventLevel()` - Retrieves the default Serilog `LogEventLevel` from the configuration. It first attempts to read `Log:Levels:Default`, falling back to `Log:DefaultLogLevel` if not present or invalid. If both are missing or unparsable, it defaults to `LogEventLevel.Verbose`.
+1. `Log:Levels:Default` is used when present.
+2. Otherwise, `Log:DefaultLogLevel` is used when present.
+3. When neither key exists, the result is `Information`.
+
+An explicitly configured but unsupported value throws `InvalidOperationException`. This prevents a typo in the preferred key from being hidden by the legacy key or an unexpectedly permissive fallback.
+
+The extension only resolves the level. It does not create a logger, add sinks, reload configuration, or change Serilog's global logger.

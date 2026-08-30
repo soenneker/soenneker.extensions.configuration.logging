@@ -1,25 +1,40 @@
-﻿using Microsoft.Extensions.Configuration;
+using System;
+using Microsoft.Extensions.Configuration;
 using Serilog.Events;
-using Soenneker.Extensions.String;
 
 namespace Soenneker.Extensions.Configuration.Logging;
 
 /// <summary>
-/// A collection of helpful IConfiguration logging related extension methods
+/// Provides configuration-based Serilog log-level resolution.
 /// </summary>
 public static class ConfigurationLoggingExtension
 {
     /// <summary>
-    /// Retrieves the default Serilog <see cref="LogEventLevel"/> from the configuration.
-    /// It first attempts to read <c>Log:Levels:Default</c>, falling back to <c>Log:DefaultLogLevel</c> if not present or invalid.
-    /// If both are missing or unparsable, it defaults to <see cref="LogEventLevel.Verbose"/>.
+    /// Resolves the default Serilog <see cref="LogEventLevel"/> from configuration.
+    /// <c>Log:Levels:Default</c> takes precedence over the legacy <c>Log:DefaultLogLevel</c> key.
     /// </summary>
     /// <param name="config">The configuration instance to read from.</param>
-    /// <returns>The resolved <see cref="LogEventLevel"/> from the configuration, or <see cref="LogEventLevel.Verbose"/> if unavailable.</returns>
+    /// <returns>The configured level, or <see cref="LogEventLevel.Information"/> when neither key is configured.</returns>
+    /// <exception cref="InvalidOperationException">The configured value is not a supported Serilog log level.</exception>
     public static LogEventLevel GetLogEventLevel(this IConfiguration config)
     {
-        return config["Log:Levels:Default"].TryToEnum<LogEventLevel>()
-               ?? config.GetValue<string>("Log:DefaultLogLevel").TryToEnum<LogEventLevel>()
-               ?? LogEventLevel.Verbose;
+        const string primaryKey = "Log:Levels:Default";
+        string? configured = config[primaryKey];
+
+        if (configured is not null)
+            return ParseLevel(primaryKey, configured);
+
+        const string legacyKey = "Log:DefaultLogLevel";
+        configured = config[legacyKey];
+
+        return configured is null ? LogEventLevel.Information : ParseLevel(legacyKey, configured);
+    }
+
+    private static LogEventLevel ParseLevel(string key, string configured)
+    {
+        if (Enum.TryParse(configured, true, out LogEventLevel level) && Enum.IsDefined(level))
+            return level;
+
+        throw new InvalidOperationException($"Configuration key '{key}' is not a supported Serilog log level.");
     }
 }
