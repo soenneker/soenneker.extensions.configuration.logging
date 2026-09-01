@@ -45,6 +45,6 @@
 
     <ItemGroup>
         <PackageReference Include="Serilog" Version="4.4.0" />
-        <PackageReference Include="Soenneker.Extensions.Configuration" Version="4.0.871" />
+        <PackageReference Include="Soenneker.Extensions.Configuration" Version="4.0.872" />
     </ItemGroup>
 </Project>
