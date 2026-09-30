@@ -9,7 +9,7 @@ namespace Soenneker.Extensions.Configuration.Logging.Tests;
 public sealed class ConfigurationLoggingExtensionTests
 {
     [Test]
-    public async Task Missing_configuration_defaults_to_information()
+    public async ValueTask Missing_configuration_defaults_to_information()
     {
         IConfiguration configuration = new ConfigurationBuilder().Build();
 
@@ -17,7 +17,7 @@ public sealed class ConfigurationLoggingExtensionTests
     }
 
     [Test]
-    public async Task Legacy_configuration_is_supported_case_insensitively()
+    public async ValueTask Legacy_configuration_is_supported_case_insensitively()
     {
         IConfiguration configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> { ["Log:DefaultLogLevel"] = "warning" })
