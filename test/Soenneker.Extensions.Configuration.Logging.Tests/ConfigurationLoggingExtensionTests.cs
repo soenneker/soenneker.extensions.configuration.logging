@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog.Events;
+using System.Threading;
 
 namespace Soenneker.Extensions.Configuration.Logging.Tests;
 
 public sealed class ConfigurationLoggingExtensionTests
 {
     [Test]
-    public async ValueTask Missing_configuration_defaults_to_information()
+    public async ValueTask Missing_configuration_defaults_to_information(CancellationToken cancellationToken)
     {
         IConfiguration configuration = new ConfigurationBuilder().Build();
 
@@ -17,7 +18,7 @@ public sealed class ConfigurationLoggingExtensionTests
     }
 
     [Test]
-    public async ValueTask Legacy_configuration_is_supported_case_insensitively()
+    public async ValueTask Legacy_configuration_is_supported_case_insensitively(CancellationToken cancellationToken)
     {
         IConfiguration configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> { ["Log:DefaultLogLevel"] = "warning" })
